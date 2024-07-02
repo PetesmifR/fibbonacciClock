@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html manifest="fib.manifest">
+<head>
+<link rel="icon" href="favicon.ico" type="image/x-icon" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<TITLE>fibonacciClock</TITLE>
+
+<script type="text/javascript" src="timer.js"></script>
+<script type="text/javascript" src="cookies.js"></script>
+
+<script type="text/javascript">
+
+
+function showTime (time){
+this.time=time ? time : ""
+}
+
+function squareObject (data) {
+  this.data=data
+  this.data.height = this.data.height ? this.data.height : this.data.width
+  this.data.text = this.data.text ? this.data.text : ""
+  this.div= '<div id="'+this.data.id+'" class="'+this.data.class+'" style="left:'+this.data.left+'px; top:'+this.data.top+'px; width:'+this.data.width+'px; height:'+this.data.height+'px; background-color:'+this.data.color+'">'+this.data.text+(this.data.open ? '' : '</div>')
+  
+  this.update = function update (color) {
+    document.getElementById(this.data.id).style.backgroundColor=color
+  }  
+}
+
+function goldenFiveObject (data) {
+  this.square= {}
+  this.data=data
+  
+  var fiveSQ=this.data.container.width/phi
+  var threeSQ=this.data.container.width-fiveSQ
+  var twoSQ=fiveSQ-threeSQ
+  var oneSQ=threeSQ-twoSQ
+  this.zero= {left:twoSQ+this.data.container.left, top:oneSQ+this.data.container.top, width:oneSQ, height:twoSQ-oneSQ}
+
+  this.square.container=new squareObject({id:this.data.id+"Container", class:"container", left:data.container.left, top:data.container.top, width:fiveSQ+threeSQ, height:fiveSQ, color:"#fff", open:true})
+  this.square.five=new squareObject({id:this.data.id+"Five", value:5, text:data.text.five, class:"mondrian", left:threeSQ, top:0, width:fiveSQ, color:"#fff"})
+  this.square.three=new squareObject({id:this.data.id+"Three", value:3, text:data.text.three, class:"mondrian", left:0, top:twoSQ, width:threeSQ, color:"#fff"})
+  this.square.two=new squareObject({id:this.data.id+"Two", value:2, text:data.text.two, class:"mondrian", left:0, top:0, width:twoSQ, color:"#fff"})
+  this.square.one=new squareObject({id:this.data.id+"One", value:1, text:data.text.one, class:"mondrian", left:twoSQ, top:0, width:oneSQ, color:"#fff"})
+  this.square.zero=new squareObject({id:this.data.id+"Zero", class:"mondrian", left:twoSQ, top:oneSQ, width:this.zero.width, height:this.zero.height, color:"#fff"})
+
+  this.show = function show (returnString) {
+      var string = ''
+	  for (var i in this.square) string+=this.square[i].div
+	  string+='</div>'
+	  if (returnString) return string
+	  else document.write(string)
+  }
+  
+  this.update = function update (H,M,S) {
+	var color 
+	document.getElementById("digiTime").innerHTML= (H<10 ? "0":"")+H+":"+(M<10 ? "0":"")+M+":"+(S<10 ? "0":"")+S
+    H=H%12
+	M=Math.floor(M/5)
+	for(var i in this.square)  if (this.square[i].data.value) {
+	  if (H >= this.square[i].data.value && M >= this.square[i].data.value) {color = this.data.color.HM; H=H-this.square[i].data.value; M=M-this.square[i].data.value}
+	  else if (H >= this.square[i].data.value) {color = this.data.color.H; H=H-this.square[i].data.value}
+	  else if (M >= this.square[i].data.value) {color = this.data.color.M; M=M-this.square[i].data.value}
+	  else color = this.data.color.off
+      this.square[i].update(color)
+ 	}
+  }
+}
+
+function oddMinutesUpdate (M) {
+  var color 
+  M=M%5
+  for(var i in this.square)  if (this.square[i].data.value) {
+	  if (M >= this.square[i].data.value) {color = this.data.color.M; M=M-this.square[i].data.value}
+	  else color = this.data.color.off
+      this.square[i].update(color)
+ 	}
+}
+
+function showTime() {
+  hoursMinutes.update(this.H,this.M,this.S)
+  oddMinutes.update(this.M)
+}
+
+function showDemoTime(data) {
+  this.H=data.H>-1 ? data.H : this.H
+  this.M=data.M>-1 ? data.M : this.M
+  this.OM=data.OM>-1 ? data.OM : this.OM
+  this.S=data.S>-1 ? data.S : this.S
+  hoursMinutes.update(this.H,parseInt(this.M)+parseInt(this.OM),this.S)
+  oddMinutes.update(this.OM)
+}
+
+function saveColours () {
+  var colours=hoursMinutes.data.color
+  colours.OM=oddMinutes.data.color.M
+  this.setObject(colours)
+ }
+
+function retrieveColours (reset) {
+  var namedColours = {HM:"blue", H:"red", M:"lime", OM:"yellow", off:"white"}
+  var defaultColours = {HM:"#0000ff", H:"#ff0000", M:"#00ff00", OM:"#ffff00", off:"#ffffff"}
+  
+  var colours= reset ? defaultColours : this.getObject() ? this.getObject() : defaultColours
+  
+  var checkForColor=document.createElement("input") // check whether input type "color" is supported
+  checkForColor.setAttribute("type", "color")
+
+  if (checkForColor.type=="text") for (var i in colours) if (colours[i].indexOf("#")+1) if (colours[i]== defaultColours[i]) colours[i] = namedColours[i]
+  if (reset) {
+	for (var i in hoursMinutes.data.color) if (i!="off") {
+	  hoursMinutes.data.color[i]=colours[i]
+	  document.getElementById(i).value=colours[i]
+	  }
+	oddMinutes.data.color["M"]=colours["OM"]
+	document.getElementById("OM").value=colours["OM"]
+	this.setObject(colours)
+  }
+  else return colours
+}
+
+function classShow (className) {
+  var classList = document.querySelectorAll("."+className);
+  for (var i = 0; i < classList.length; i++) classList[i].style.visibility = (classList[i].style.visibility!= 'visible') ? 'visible' : 'hidden'
+}
+
+function menuObject(data) {
+  for (var i in data) this[i]=data[i]
+  this.helpPage=new helpPageObject(this.helpPage)
+  this.demoPage=new demoPageObject(this.demoPage)
+  this.colourPage=new colourPageObject(this.colourPage)
+
+
+  this.show=function () {
+  with (document.getElementById(this.id).style) width= parseInt(width) ? "0px" : this.menuContainer.width+"px"
+  if (this.helpPage.visible) this.helpPage.show()
+  if (this.demoPage.visible) this.demoPage.show()
+  if (this.colourPage.visible) this.colourPage.show()
+  }
+  
+  this.exit=this.show
+  
+  this.help=function () {
+    if (this.colourPage.visible) this.colourPage.show()
+    if (this.demoPage.visible) this.demoPage.show()
+    this.helpPage.show()
+  }
+  
+  this.demo=function () {
+    if (this.helpPage.visible) this.helpPage.show()
+    if (this.colourPage.visible) this.colourPage.show()
+    this.demoPage.show()
+  }
+
+  this.colours=function () {
+    if (this.helpPage.visible) this.helpPage.show()
+    if (this.demoPage.visible) this.demoPage.show()
+    this.colourPage.show()
+  }
+
+  
+  this.setup=function () {
+    var text=""
+    text+='<div id="'+this.trigger.id+'" class="'+this.trigger.id+'" onclick="'+this.id+'.show()" style="visibility:hidden; left:'+(this.menuContainer.left-this.trigger.height)+'px; top:'+(this.menuContainer.top+this.trigger.width)+'px; height:'+(this.trigger.height)+'px; width:'+(this.trigger.width)+'px;"><div class="centred">Menu</div></div>'
+	text+='<div id="'+this.id+'" style="visibility:inherited; transition: width 0.5s; position:absolute; left:'+this.menuContainer.left+'px; top:'+this.menuContainer.top+'px; width:0px; height:'+this.menuContainer.height+'px;">'
+	for (var i in this.menu) text+='<div class="'+this.id+'" onclick="'+ this.id+"."+this.menu[i]+'()"><div class="centred">'+i+'</div></div>'
+   text+='</div>'
+ 	document.write(text)
+  }
+} 
+
+function helpPageObject (data) {
+  for (var i in data) this[i]=data[i]
+  this.visible=false
+
+  this.setup=function () {
+    var text='<div id="'+this.id+'" class="'+this.id+'" style="visibility:hidden; left:'+this.left+'px; top:'+this.top+'px; width:'+this.width+'px; height:0px;">'
+    text+='<p>Each of the squares represents a number in the Fibonacci sequence (1),1,2,3,4,5.</p>'
+	text+='<p>Add together the number represented by all red or blue squares to read the current hour.</p>'
+	text+='<p>Add together the number represented by all green or blue squares and multiply by 5 to read the current minute. For additional precision then add the numbers represented by the yellow squares.</p>'
+	text+='<p>For example:</p>'
+	text+='<p>if the "5" square is red and it is the only coloured square then the time is 5:00. If this square is blue then the time is 5:25</p>'
+	text+='<p>if the "5" and the "3" square are red then the time is 8:00. If, in addition, the "2" square is green then the time is 8:10.</p>'
+	text+='<p>For a more extensive explanation, see the <a href="http://www.theguardian.com/science/alexs-adventures-in-numberland/2015/may/09/fibonacci-clock-can-you-tell-the-time-on-the-worlds-most-stylish-nerd-timepiece">"Fibonacci Clock" article by Alex Bellos in the Guardian</a></p>'
+	text+='<p>Philippe Chretien, who originated the concept, is building an actual Fibonacci clock, he has raised over $125,000 dollars on <a href="https://www.kickstarter.com/projects/basbrun/fibonacci-clock-an-open-source-clock-for-nerds-wit">Kickstarter</a> to fund the project. You can buy your very own for $135. Mine is cheaper.</p>'
+	text+='</div>'
+	document.write(text)
+  }
+
+  this.show=function () {
+    with (document.getElementById(this.id).style) {
+	  height= parseInt(height) ? "0px" : this.height+"px"
+	  visibility = (visibility!= 'visible') ? 'visible' : 'hidden'
+	  classShow("hiddenNumbers")
+	  this.visible = this.visible ? false : true
+    }
+  }
+  this.setup()
+}
+
+function demoPageObject (data) {
+  for (var i in data) this[i]=data[i]
+  this.visible=false
+
+  this.setup=function () {
+    var text='<div id="'+this.id+'" class="'+this.id+'" style="visibility:hidden; left:'+this.left+'px; top:'+this.top+'px; height:0px;">'
+    text+='<div id="'+this.id+'Height" style="font-size:1.5vw"><div>Choose a time to display. </div>'
+    text+='<form id="setTime"><table>'
+    text+='<tr><td>Hours:</td><td><select style="width:100%" id="'+this.hours+'" onchange="showDemoTime({H:this.value})">'
+	for (var i=0;i<12;i++) text+='<option>'+i+'</option>'
+    text+='</select></td></tr>'
+    text+='<tr><td>Minutes:</td><td><select style="width:100%" id="'+this.minutes+'" onchange="showDemoTime({M:this.value})">'
+    for (var i=0;i<12;i++) text+='<option>'+i*5+'</option>'
+    text+='<tr><td>Odd Minutes:</td><td><select style="width:100%" id="'+this.oddMinutes+'" onchange="showDemoTime({OM:this.value})">'
+    for (var i=0;i<5;i++) text+='<option>'+i+'</option>'
+    text+='</select></td></tr>'
+    text+='</table></form><div>&nbsp;</div></div></div>'
+
+	document.write(text)
+  }
+
+  this.show=function () {
+    with (document.getElementById(this.id).style) {
+	  height= parseInt(height) ? "0px" : document.getElementById(this.id+"Height").offsetHeight+padding+"px"
+	  visibility = (visibility!= 'visible') ? 'visible' : 'hidden'
+ 	  this.visible = this.visible ? false : true
+      classShow("hiddenNumbers")
+	  if (parseInt(height)) {
+	    hMtimer.stop()
+	    showDemoTime({H:hMtimer.real.H, M:Math.floor(hMtimer.real.M/5)*5,S:0,OM:hMtimer.real.M%5})
+	    document.getElementById(this.hours).selectedIndex=hMtimer.real.H%12
+	    document.getElementById(this.minutes).selectedIndex=Math.floor(hMtimer.real.M/5)
+	    document.getElementById(this.oddMinutes).selectedIndex=hMtimer.real.M%5
+    	}
+	  else {
+	  	hMtimer.reset()
+		hMtimer.start(500)
+	  }
+    }
+  }
+  this.setup()
+}
+
+function colourPageObject (data) {
+  for (var i in data) this[i]=data[i]
+  this.visible=false
+
+  this.setup=function () {
+	var text='<div id="'+this.id+'" class="'+this.id+'" style="visibility:hidden; left:'+this.left+'px; top:'+this.top+'px; height:0px;">'
+    text+='<div id="'+this.id+'Height" style="white-space: nowrap; font-size:1.5vw; "><div>Choose colours. <a href="javascript:savedColours.retrieve(true)">(Reset)</a></div>'
+    text+='<form id="setColors"><table>'
+    text+='<tr><td>Hours & Minutes:</td><td><input id="HM" type="color" class="form-control" onchange="hoursMinutes.data.color.HM=this.value; savedColours.save()" value="'+hoursMinutes.data.color.HM+'"></td></tr>'
+    text+='<tr><td>Hours:</td><td><input id="H" type="color" class="form-control" onchange="hoursMinutes.data.color.H=this.value; savedColours.save()" value="'+hoursMinutes.data.color.H+'"></td></tr>'
+    text+='<tr><td>Minutes:</td><td><input id="M" type="color" class="form-control" onchange="hoursMinutes.data.color.M=this.value; savedColours.save()" value="'+hoursMinutes.data.color.M+'"></td></tr>'
+    text+='<tr><td>Odd Minutes:</td><td><input id="OM" type="color" class="form-control" onchange="oddMinutes.data.color.M=this.value; savedColours.save()" value="'+oddMinutes.data.color.M+'"></td></tr>'
+    text+='</table></form></div></div>'
+
+	document.write(text)
+  }
+
+  this.show=function () {
+    with (document.getElementById(this.id).style) {
+	  height= parseInt(height) ? "0px" : document.getElementById(this.id+"Height").offsetHeight+20+"px"
+	  visibility = (visibility!= 'visible') ? 'visible' : 'hidden'
+ 	  this.visible = this.visible ? false : true
+    }
+  }
+  this.setup()
+}
+
+function toggleMenuTrigger() {
+	if (document.getElementById('menu').style.width !="0px") return
+	document.getElementById('menuTrigger').style.visibility = document.getElementById('menuTrigger').style.visibility =='visible' ? 'hidden' : 'visible'
+}
+
+</script>
+</head>
+
+<body onUnload="saveSettings()" onClick="toggleMenuTrigger()">
+
+<style>
+body {font-family: Verdana, Arial, Helvetica, sans-serif; font-size:1.5vw; font-weight:normal;margin:0;padding:0;color:rgb(0,0,0); background:rgb(0,0,0);overflow:hidden}
+* {box-sizing: border-box;}
+a {color:rgb(0,0,255); text-decoration:none; background: transparent;}
+a:hover {color:rgb(255,0,0); background: transparent;}
+div.mondrian {position:absolute; border: 2px solid #000; -webkit-transition: background-color 4s; transition: background-color 4s;}
+div.container {position:absolute; border: 2px solid #000;}
+
+div.menuTrigger {
+  position:absolute; font-size:1.4vw; white-space: nowrap; overflow: hidden; border-radius: 25px 25px 0px 0px; background: #8AC007;
+  -ms-transform: rotate(-90deg); -webkit-transform: rotate(-90deg); transform: rotate(-90deg);
+  -ms-transform-origin: 0% 0%; -webkit-transform-origin: 0% 0%; transform-origin: 0% 0%;
+}
+div.menuTrigger:hover {color:#f00;}
+div.menu {position:relative; margin: 0px 0px 2% 4px; font-size:1.5vw; white-space: nowrap; overflow: hidden; width:60%; height:10%; border-radius: 0px 25px 25px 0px; background: rgba(255,255,0,0.7); transition: width 0.25s;}
+div.menu:hover {width:65%; color:#f00}
+div.helpPage {position:absolute;transition: height 0.5s, visibility 0.4s; overflow: auto; border: 3px inset ; padding: 5px; background: rgba(255,255,0,0.7);}div.hiddenNumbers {font-size:300%; text-align:right; margin:1vw; visibility:hidden}
+div.demoPage, div.colourPage {position:absolute;transition: height 0.5s, visibility 0.4s; overflow: hidden; border: 3px inset ; padding: 5px; background: rgba(255,255,0,0.7);}div.hiddenNumbers {font-size:300%; text-align:right; margin:1vw; visibility:hidden}
+
+.centred {
+  isibility:hidden;
+  position: relative; text-align:center; top:50%; 
+  -ms-transform:translateY(-50%); -webkit-transform:translateY(-50%); transform:translateY(-50%);
+  }
+</style>
+
+<script type="text/javascript">
+var phi = (1+Math.sqrt(5))/2
+var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth
+var h = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight
+w = w/phi>h ? 0.95*h*phi : w
+
+var defaultColours = {HM:"#0000ff", H:"#ff0000", M:"#00ff00", OM:"#ffff00", off:"#ffffff"}
+
+var savedColours = new cookieObject("colours")
+savedColours.save=saveColours
+savedColours.retrieve=retrieveColours
+
+colours= savedColours.retrieve()
+
+var hoursMinutes = new goldenFiveObject ({id:"hM",  color:{HM:colours.HM, H:colours.H, M:colours.M, off:colours.off}, text:{one:'<div class=hiddenNumbers>1</div>', two:'<div class=hiddenNumbers>2</div>', three:'<div class=hiddenNumbers>3</div>', five:"<div style='position:absolute; height:100%; width:100%;' onmouseover=document.getElementById(\'digiTime\').style.visibility=\'hidden\'><div class=hiddenNumbers>5</div></div>"}, container:{left:w/40, top:w/40, width:0.95*w}})
+hoursMinutes.show ()
+
+var oddMinutes = new goldenFiveObject ({id:"s", color:{M:colours.OM, off:colours.off}, text:{five:"<div style='position:absolute; height:100%; width:100%;' onmouseover=document.getElementById(\'digiTime\').style.visibility=\'visible\' onmouseout=document.getElementById(\'digiTime\').style.visibility=\'hidden\'><div style='visibility:hidden; font-size:8pt; padding-top:10px; text-align:center' id='digiTime'></div></div>"}, container:hoursMinutes.zero})
+oddMinutes.update=oddMinutesUpdate
+oddMinutes.show ()
+
+var hMtimer= new timerObject({ID:"hMtimer", elapsed:null, remaining:null, real:true, duration:{inSec:0, H:0, M:0, S:0}, mask:"H:MM:SS"})
+hMtimer.real.show=showTime
+hMtimer.start(500)
+//alert(w/40)
+
+var menu= new menuObject ( {
+  id:"menu",
+  trigger: {id:"menuTrigger", height:w/40*0.85, width:h/9}, 
+  menuContainer:{left:hoursMinutes.data.container.left+hoursMinutes.square.three.data.left, top:(hoursMinutes.data.container.top+hoursMinutes.square.three.data.top)+hoursMinutes.square.three.data.height/10, height:hoursMinutes.square.three.data.height*0.9, width:hoursMinutes.square.three.data.width},
+  menu:{"Demo Mode":"demo", "Help":"help", "Colour Scheme":"colours", "Exit Menu":"exit"},
+  helpPage:{id:"helpPage", left:hoursMinutes.data.container.left+hoursMinutes.square.five.data.left+0.05*hoursMinutes.square.five.data.width, top:hoursMinutes.data.container.top+hoursMinutes.square.five.data.top+0.05*hoursMinutes.square.five.data.height, height:0.9*hoursMinutes.square.five.data.height, width:0.85*hoursMinutes.square.five.data.width},
+  demoPage:{id:"demoPage", hours:"hours", minutes:"minutes", oddMinutes:"oddMinutes", left:hoursMinutes.data.container.left+hoursMinutes.square.five.data.left+0.05*hoursMinutes.square.five.data.width, top:hoursMinutes.data.container.top+hoursMinutes.square.five.data.top+0.05*hoursMinutes.square.five.data.height, height:0.90*hoursMinutes.square.five.data.height, width:0.9*hoursMinutes.square.five.data.width},
+  colourPage:{id:"colourPage", hours:"hours", minutes:"minutes", oddMinutes:"oddMinutes", left:hoursMinutes.data.container.left+hoursMinutes.square.five.data.left+0.05*hoursMinutes.square.five.data.width, top:hoursMinutes.data.container.top+hoursMinutes.square.five.data.top+0.05*hoursMinutes.square.five.data.height, height:0.90*hoursMinutes.square.five.data.height, width:0.9*hoursMinutes.square.five.data.width},
+})
+
+menu.setup()
+
+
+</script>
+</body>
+</html>
